@@ -12,17 +12,17 @@ const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/bookstore"
 
 mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log("✅ MongoDB Connected"))
-  .catch(error => {
+  .catch((error) => {
     console.error("❌ MongoDB Connection Failed:", error.message);
     process.exit(1);
   });
 
 // ✅ Allowed Origins List
 const allowedOrigins = [
-  "https://bac-1-b2m2.onrender.com",
-  process.env.CORS_ORIGIN,
-  process.env.CORS_ALLOW_ORIGIN
-].filter(origin => origin); // Remove empty values
+  "https://bac-1-b2m2.onrender.com",  // Add your production frontend URL here
+  process.env.CORS_ORIGIN,           // From .env
+  process.env.CORS_ALLOW_ORIGIN     // From .env
+].filter(Boolean); // Remove any empty or falsy values from the list
 
 app.use((req, res, next) => {
   console.log(`🌐 Incoming request from: ${req.headers.origin}`);
@@ -31,7 +31,7 @@ app.use((req, res, next) => {
 
 // ✅ CORS Middleware
 app.use(cors({
-  origin: function (origin, callback) {
+  origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -47,7 +47,7 @@ app.use(cors({
 // ✅ Preflight OPTIONS Request Handling
 app.options("*", (req, res) => res.sendStatus(200));
 
-// ✅ Middleware
+// ✅ Middleware for parsing JSON and cookies
 app.use(express.json());
 app.use(cookieParser());
 
@@ -71,7 +71,7 @@ app.use("/cart", cartRoutes);
 // ✅ Root Route
 app.get("/", (req, res) => res.send("🚀 Welcome to the Bookstore API"));
 
-// ✅ 404 Route Handler
+// ✅ 404 Route Handler for Unmatched Routes
 app.use((req, res) => res.status(404).json({ message: "❌ Route not found" }));
 
 // ✅ Global Error Handling Middleware
