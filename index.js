@@ -52,7 +52,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 // ✅ JWT Authentication Middleware
-const { authenticateToken } = require("./middleware/authMiddleware");
+const { authenticateToken } = require("./Middleware/authMiddleware");
 
 // ✅ Import Routes
 const userRoutes = require("./routes/user");
