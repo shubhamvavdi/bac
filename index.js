@@ -7,19 +7,29 @@ const jwt = require("jsonwebtoken");
 
 const app = express();
 
-// ✅ **CORS Allowed Origins List**
+// ✅ MongoDB Connection
+const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/bookstore";
+
+mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log("✅ MongoDB Connected"))
+  .catch(error => {
+    console.error("❌ MongoDB Connection Failed:", error.message);
+    process.exit(1);
+  });
+
+// ✅ Allowed Origins List
 const allowedOrigins = [
   "https://bac-1-b2m2.onrender.com",
   process.env.CORS_ORIGIN,
   process.env.CORS_ALLOW_ORIGIN
-].filter(Boolean); // Remove any undefined values
+].filter(origin => origin); // Remove empty values
 
 app.use((req, res, next) => {
   console.log(`🌐 Incoming request from: ${req.headers.origin}`);
   next();
 });
 
-// ✅ **CORS Middleware**
+// ✅ CORS Middleware
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
@@ -34,59 +44,42 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
-// ✅ **Preflight OPTIONS Request Handling**
-app.options("*", (req, res) => {
-  res.sendStatus(200);
-});
+// ✅ Preflight OPTIONS Request Handling
+app.options("*", (req, res) => res.sendStatus(200));
 
-// ✅ **Middleware**
+// ✅ Middleware
 app.use(express.json());
 app.use(cookieParser());
 
-// ✅ **MongoDB Connection**
-const MONGO_URI = process.env.MONGO_URI;
+// ✅ JWT Authentication Middleware
+const { authenticateToken } = require("./middleware/authMiddleware");
 
-mongoose.connect(MONGO_URI)
-  .then(() => console.log("✅ MongoDB Connected"))
-  .catch((error) => {
-    console.error("❌ MongoDB Connection Failed:", error.message);
-    process.exit(1);
-  });
-
-// ✅ **JWT Authentication Middleware**
-// const authenticateToken = require("./middlewares/authenticate").authenticateToken;
-const { authenticateToken } = require("./Middleware/authMiddleware").authenticateToken;;
-
-// ✅ **Import Routes**
+// ✅ Import Routes
 const userRoutes = require("./routes/user");
 const bookRoutes = require("./routes/book");
 const orderRoutes = require("./routes/order");
 const favouriteRoutes = require("./routes/favourites");
 const cartRoutes = require("./routes/cart");
 
-// ✅ **Register Routes**
+// ✅ Register Routes
 app.use("/user", userRoutes);
 app.use("/book", bookRoutes);
 app.use("/orders", orderRoutes);
 app.use("/favourites", favouriteRoutes);
 app.use("/cart", cartRoutes);
 
-// ✅ **Root Route**
-app.get("/", (req, res) => {
-  res.send("🚀 Welcome to the Bookstore API");
-});
+// ✅ Root Route
+app.get("/", (req, res) => res.send("🚀 Welcome to the Bookstore API"));
 
-// ✅ **404 Route Handler**
-app.use((req, res) => {
-  res.status(404).json({ message: "❌ Route not found" });
-});
+// ✅ 404 Route Handler
+app.use((req, res) => res.status(404).json({ message: "❌ Route not found" }));
 
-// ✅ **Global Error Handling Middleware**
+// ✅ Global Error Handling Middleware
 app.use((err, req, res, next) => {
   console.error("❌ Server Error:", err.message);
   res.status(500).json({ message: "Internal Server Error" });
 });
 
-// ✅ **Start Server**
+// ✅ Start Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
